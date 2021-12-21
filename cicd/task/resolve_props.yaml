@@ -22,7 +22,7 @@ spec:
     - name: endpoint-path
   steps:
     - name: parse-source-properties
-      image: image-registry.openshift-image-registry.svc:5000/$(context.taskRun.namespace)/yq-zip
+      image: mikefarah/yq:4.7.1
       script: |
         #!/bin/bash
 
