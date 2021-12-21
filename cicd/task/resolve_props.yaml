@@ -23,6 +23,8 @@ spec:
   steps:
     - name: parse-source-properties
       image: mikefarah/yq:4.7.1
+      command:
+        - ""
       script: |
         set -ex
 
