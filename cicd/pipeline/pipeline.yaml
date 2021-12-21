@@ -97,6 +97,7 @@ spec:
           value: $(workspaces.source.path)/bars
       runAfter:
         - generate-bar
+        - clone-is-infra
       workspaces:
         - name: source
           workspace: shared-workspace
