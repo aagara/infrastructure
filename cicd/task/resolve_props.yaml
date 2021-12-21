@@ -22,10 +22,8 @@ spec:
     - name: endpoint-path
   steps:
     - name: parse-source-properties
-      image: image-registry.openshift-image-registry.svc:5000/$(context.taskRun.namespace)/yq-zip
+      image: mikefarah/yq:4.7.1
       script: |
-        #!/bin/bash
-
         set -ex
 
         properties_yaml_path=$(workspaces.input.path)/$(params.is-source-directory)/pipeline_properties.yaml
