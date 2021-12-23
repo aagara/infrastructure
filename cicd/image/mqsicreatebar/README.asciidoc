@@ -29,7 +29,7 @@ $ tree .
 ├── Dockerfile
 ├── README.asciidoc
 ├── deps
-│   └── 11.0.0.15-ACE-LINUX64-DEVELOPER.tar.gz
+│   └── 12.0.3.0-ACE-LINUX64-DEVELOPER.tar.gz
 └── mqsicreatebar.sh
 ----
 
@@ -37,8 +37,8 @@ The `Dockerfile` takes a build argument, `ACE_INSTALL`, to refer to the install 
 
 [source,bash]
 ----
-$ docker build -t mqsicreatebar:11.0.0.15 \
-        --build-arg ACE_INSTALL=11.0.0.15-ACE-LINUX64-DEVELOPER.tar.gz .
+docker build -t mqsicreatebar:12.0.3.0 \
+        --build-arg ACE_INSTALL=12.0.3.0-ACE-LINUX64-DEVELOPER.tar.gz .
 ----
 
 == Smoke Test it out
@@ -49,7 +49,7 @@ Running
 
 [source,bash]
 ----
-$ docker run mqsicreatebar:11.0.0.15
+docker run mqsicreatebar:12.0.3.0
 ----
 
 should output:
@@ -92,6 +92,23 @@ Command Options:
 
 ----
 
+[NOTE]
+====
+You may get a launcher error at the above output, such as
+[source,bash,attributes]
+----
+Launcher error: GDBus proxy init failed to connect org.eclipse.swt:/org/eclipse/swt on org.eclipse.swt.
+Launcher error: GDBus gdbus_proxy init failed for reason: Failed to execute child process “dbus-launch” (No such file or directory)
+Launcher Error. Could not init gdbus proxy. Bug? Launching eclipse without opening files passed in.
+SWT SessionManagerDBus: Failed to connect to org.gnome.SessionManager: Failed to execute child process ?dbus-launch? (No such file or directory)
+SWT SessionManagerDBus: Failed to connect to org.xfce.SessionManager: Failed to execute child process ?dbus-launch? (No such file or directory)
+no link files found at location:/opt/ibm/ace-12/tools/links
+----
+
+you can ignore these errors.
+
+====
+
 == Functional test it out
 
 To do a real test, we can create a ACE BAR file from the hello-world application, link:https://github.com/ace-hello-world/HelloWorld.git[]. 
@@ -118,7 +135,7 @@ git clone https://github.com/ace-hello-world/HelloWorld.git
 +
 [source,bash]
 ----
-$ mkdir bars
+mkdir bars
 ----
 
 . Run `mqsicreatebar` container to the build the BAR
@@ -158,7 +175,7 @@ Once the container finishes, you will see the BAR file on the host machine:
 +
 [source,bash]
 ----
-$ ls -l /tmp/bars
+ls -l /tmp/bars
 ----
 +
 should display
@@ -192,7 +209,7 @@ You can check the log of the container with:
 
 [source,bash]
 ----
-$ docker logs -f test-ace
+docker logs -f test-ace
 ----
 
 which should show that the message flow has been deployed:
@@ -220,7 +237,7 @@ We can test the message flow with:
 
 [source,bash]
 ----
-$ curl localhost:7800/helloworld
+curl localhost:7800/helloworld
 ----
 
 which should display the following:
@@ -231,50 +248,3 @@ which should display the following:
 ----
 
 This should be sufficient to prove that `mqsicreatebar` container is successfully building the BAR.
-
-== Upload the image to OCP internal registry
-
-In order to use this image in `generate-bar` tekton task, we need to upload it to a container image registry the tekton task has access to. OpenShift's internal registry is such as registry, so we will use that.
-
-. Make sure your instance of OpenShift internal registry is exposed
-+
-[source,bash,attributes]
-----
-oc patch configs.imageregistry.operator.openshift.io/cluster --patch '{"spec":{"defaultRoute":true}}' --type=merge
-----
-+
-See more at link:https://docs.openshift.com/container-platform/4.8/registry/securing-exposing-registry.html[Exposing the registry]
-
-. Store the registry url in a shell variable:
-+
-[source,bash,attributes]
-----
-openshift_registry=$(oc -n openshift-image-registry get routes default-route -o jsonpath='{.spec.host}')
-----
-
-. Login to the registry
-+
-[source,bash,attributes]
-----
-docker login $openshift_registry -u oc -p "$(oc whoami -t)"
-----
-+
-Make sure you are logged in to your OpenShift instance.
-
-. Tag the `mqsicreatebar` image so that registry url is set to the OpenShift registry:
-+
-[source,bash,attributes]
-----
-docker tag mqsicreatebar:12.0.3.0 $openshift_registry/ace/mqsicreatebar
-----
-
-. Push the image
-+
-[source,bash,attributes]
-----
-docker push $openshift_registry/ace/mqsicreatebar
-----
-
-
-
-
