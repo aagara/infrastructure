@@ -5,35 +5,35 @@ metadata:
 spec:
   params:
   - name: is-infra-directory
-  - name: IMAGE
-  - name: release-name
+  - name: IMAGE 
+  - name: registry-host
+  - name: ocp-cli-namespace
+    default: openshift
+  - name: release-name 
   - name: configurations
-  steps:
-  - name: setup-custom-resource
-    image: mikefarah/yq:4.7.1
-    workingDir: $(workspaces.input.path)
-    script: |
-      is_manifest_template=$(workspaces.input.path)/$(params.is-infra-directory)/IntegrationServer.yaml
-
-      mkdir -p $(workspaces.input.path)/integration_server
-      is_manifest_rendered=$(workspaces.input.path)/integration_server/IntegrationServer.yaml
-
-      cp $is_manifest_template $is_manifest_rendered
-
-      e=$(params.release-name) yq e -i '.metadata.name = env(e)' $is_manifest_rendered
-      e=$(params.IMAGE) yq e -i '.spec.pod.containers.runtime.image = env(e)'  $is_manifest_rendered
-
-      yq --version
-      
-      for configuration in $(params.configurations) ; do
-        config=$configuration yq e -i '.spec.configurations = (.spec.configurations // []) + env(config)' $is_manifest_rendered
-      done
-
-  - name: deploy-integration-server
-    image: quay.io/openshift/origin-cli:latest
-    workingDir: $(workspaces.input.path)
-    command: ["oc"]
-    args: ["apply", "-f", "integration_server/IntegrationServer.yaml"]
-
   workspaces:
     - name: input
+  steps:
+    - name: setup-custom-resource
+      image: mikefarah/yq:4.7.1
+      workingDir: $(workspaces.input.path)
+      script: |
+        is_mainifest_template=$(workspaces.input.path)/$(params.is-infra-directory)/IntegrationServer.yaml
+
+        mkdir -p $(workspaces.input.path)/integration_server
+        is_manifest_rendered=$(workspaces.input.path)/integration_server/IntegrationServer.yaml
+
+        cp $is_mainifest_template $is_manifest_rendered
+
+        e=$(params.release-name) yq e -i '.metadata.name = env(e)' $is_manifest_rendered
+        e=$(params.IMAGE) yq e -i '.spec.pod.containers.runtime.image = env(e)'  $is_manifest_rendered
+        yq --version
+      
+        for configuration in $(params.configurations) ; do
+          config=$configuration yq e -i '.spec.configurations = (.spec.configurations // []) + env(config)' $is_manifest_rendered
+        done
+    - name: deploy-integration-server 
+      image: $(params.registry-host)/$(params.ocp-cli-namespace)/cli:latest
+      workingDir: $(workspaces.input.path)
+      command: ["oc"]
+      args: ["apply","-f", "integration_server/IntegrationServer.yaml"]
