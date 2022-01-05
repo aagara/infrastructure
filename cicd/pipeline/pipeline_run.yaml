@@ -1,7 +1,7 @@
 apiVersion: tekton.dev/v1alpha1
 kind: PipelineRun
 metadata:
-  name: is-build-hello-world
+  generateName: is-build-hello-world-
 spec:
   params:
     - name: is-source-repo-url
